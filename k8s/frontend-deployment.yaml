@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medical-frontend
+  namespace: medical-app
+  labels:
+    app: medical-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: medical-frontend
+  template:
+    metadata:
+      labels:
+        app: medical-frontend
+    spec:
+      containers:
+        - name: medical-frontend
+          image: djferrer/proyectofinal-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"

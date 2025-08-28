@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: medical-backend
+  namespace: medical-app
+spec:
+  selector:
+    app: medical-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP
