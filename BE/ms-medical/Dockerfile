@@ -5,7 +5,7 @@ FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
 # Copia el artefacto jar generado por Gradle
-COPY build/libs/ms-medical-0.0.1-SNAPSHOT.jar app.jar
+COPY build/libs/*.jar app.jar
 
 # Expone el puerto del backend
 EXPOSE 8080

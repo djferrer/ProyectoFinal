@@ -33,6 +33,10 @@ spec:
                       operator: In
                       values: ["medical-backend"]
                 topologyKey: "kubernetes.io/hostname"
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z mysql 3306; do echo "⏳ Esperando MySQL..."; sleep 5; done']
       containers:
         - name: medical-backend
           image: djferrer/proyectofinal-backend:latest
@@ -45,7 +49,6 @@ spec:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-root-password
-          # Probes TCP porque tu app no expone /actuator/health
           readinessProbe:
             tcpSocket:
               port: 8080
@@ -67,3 +70,17 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: medical-backend
+  namespace: medical-app
+spec:
+  selector:
+    app: medical-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
