@@ -19,18 +19,31 @@ spec:
         - name: mysql-medical
           image: mysql:5.7
           imagePullPolicy: IfNotPresent
+          args:
+            - "--character-set-server=utf8mb4"
+            - "--collation-server=utf8mb4_unicode_ci"
+            - "--explicit_defaults_for_timestamp=1"
           env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mysql-secret
                   key: mysql-root-password
+            - name: MYSQL_DATABASE
+              value: db_medical
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: mysql-storage
               mountPath: /var/lib/mysql
+            # Monta los scripts de inicialización si usas ConfigMap init.sql:
+            - name: mysql-initdb
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
       volumes:
         - name: mysql-storage
           persistentVolumeClaim:
             claimName: mysql-pvc
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config   # debe existir ese ConfigMap (tu run/deploy script ya lo crea)
