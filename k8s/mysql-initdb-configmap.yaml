@@ -12,4 +12,4 @@ data:
       name VARCHAR(100) NOT NULL,
       specialty VARCHAR(100) NOT NULL
     );
-    INSERT INTO doctors (name, specialty) VALUES ('Juan Pérez', 'Cardiología');
+    INSERT INTO doctors (name, specialty) VALUES ('Juan Perez', 'Cardiologia');
