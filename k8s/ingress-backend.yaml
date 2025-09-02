@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medical-backend-ing
+  namespace: medical-app
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: proyectodouglas.local
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        # Con regex, usa ImplementationSpecific (evita el warning de Prefix+regex)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: medical-backend
+            port:
+              number: 8080

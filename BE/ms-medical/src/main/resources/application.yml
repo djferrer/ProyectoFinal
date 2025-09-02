@@ -10,18 +10,16 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # conserva datos entre reinicios
+      ddl-auto: update        # conserva los datos y no recrea tablas
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
 
   sql:
     init:
-      mode: always
-      platform: mysql
-      encoding: UTF-8
+      mode: never             # DESACTIVA data.sql para evitar duplicados
 
 springdoc:
   api-docs:
