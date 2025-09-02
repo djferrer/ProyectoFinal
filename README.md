@@ -194,3 +194,8 @@ curl -I -H "Host: proyectodouglas.local" http://localhost/
 
 **Fin.**  
 Cualquier revisión puede iniciarse con `./deploy_project.sh` y validarse en `http://proyectodouglas.local/` y `http://proyectodouglas.local/api/doctor`.
+
+
+./destroy_project.sh
+./deploy_project.sh
+

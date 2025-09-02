@@ -3,60 +3,48 @@ set -e
 
 NAMESPACE="medical-app"
 
-echo "🧹 Eliminando namespace anterior si existe..."
-kubectl delete namespace $NAMESPACE --ignore-not-found
+echo "🚀 Despliegue completo en Kubernetes"
 
-echo "⏳ Esperando a que se eliminen los recursos anteriores..."
-sleep 5
+# 0) Limpieza idempotente
+kubectl delete namespace "$NAMESPACE" --ignore-not-found || true
+kubectl wait --for=delete ns/"$NAMESPACE" --timeout=120s || true
 
-echo "🚀 Creando namespace..."
-kubectl create namespace $NAMESPACE
-
-echo "🔑 Creando Secret de MySQL..."
+# 1) Base
+kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/secret.yaml
 
-echo "💾 Creando volumen para MySQL..."
+# 2) MySQL
 kubectl apply -f k8s/mysql-volume.yaml
-
-echo "📦 Creando ConfigMap con init.sql..."
 kubectl apply -f k8s/mysql-initdb-configmap.yaml
-
-echo "🐬 Desplegando MySQL..."
 kubectl apply -f k8s/mysql-deployment.yaml
 kubectl apply -f k8s/mysql-service.yaml
 
-echo "⏳ Esperando a que MySQL esté listo..."
-kubectl rollout status deployment/mysql-medical -n $NAMESPACE
-echo "⌛ Esperando 15 segundos extra para inicialización de MySQL..."
-sleep 15
-
-echo "🖥️ Desplegando Backend..."
-kubectl apply -f k8s/backend-deployment.yaml
-kubectl apply -f k8s/backend-service.yaml
-
-echo "⏳ Esperando a que Backend esté listo..."
-kubectl rollout status deployment/contact-backend -n $NAMESPACE
-echo "⌛ Esperando 20 segundos extra para Spring Boot..."
-sleep 20
-
-echo "🌐 Desplegando Frontend..."
-kubectl apply -f k8s/frontend-deployment.yaml
-kubectl apply -f k8s/frontend-service.yaml
-
-echo "⏳ Esperando a que Frontend esté listo..."
-kubectl rollout status deployment/medical-frontend -n $NAMESPACE
-echo "⌛ Esperando 10 segundos extra para inicialización del Frontend..."
+echo "⏳ Esperando MySQL..."
+kubectl -n "$NAMESPACE" rollout status deploy/mysql-medical --timeout=180s
 sleep 10
 
-echo "📡 Iniciando port-forward (MySQL:3306, Backend:8080, Frontend:3000)..."
-kubectl port-forward svc/mysql 3306:3306 -n $NAMESPACE \
-  >/dev/null 2>&1 &
-kubectl port-forward svc/medical-backend 8080:8080 -n $NAMESPACE \
-  >/dev/null 2>&1 &
-kubectl port-forward svc/medical-frontend 3000:3000 -n $NAMESPACE
+# 3) Backend
+kubectl apply -f k8s/backend-deployment.yaml
+kubectl apply -f k8s/backend-service.yaml
+echo "⏳ Esperando Backend..."
+kubectl -n "$NAMESPACE" rollout status deploy/contact-backend --timeout=180s
+sleep 10
 
-echo "✅ Proyecto desplegado con éxito."
-echo "   - Swagger Backend: http://localhost:8080/swagger-ui/index.html"
-echo "   - Frontend:        http://localhost:3000"
-echo "   - MySQL:           127.0.0.1:3306 (user=root / pass=netect123)"
-echo "⚠️ Usa CTRL+C para detener los port-forward."
+# 4) Frontend
+kubectl apply -f k8s/frontend-deployment.yaml
+kubectl apply -f k8s/frontend-service.yaml
+echo "⏳ Esperando Frontend..."
+kubectl -n "$NAMESPACE" rollout status deploy/medical-frontend --timeout=180s
+sleep 5
+
+# 5) Ingress (¡clave para evitar el 404!)
+kubectl apply -f k8s/ingress-frontend.yaml
+kubectl apply -f k8s/ingress-backend.yaml
+
+echo "🔎 Validando Endpoints/Ingress"
+kubectl -n "$NAMESPACE" get svc,endpoints,ingress -o wide
+
+echo "✅ Listo."
+echo "   Frontend:      http://proyectodouglas.local"
+echo "   API (doctores) http://proyectodouglas.local/api/doctor"
+echo "   Swagger:       http://proyectodouglas.local/api/swagger-ui/index.html"
